@@ -2,7 +2,8 @@ import logging
 import json
 import os
 from fastapi import FastAPI, Request
-from telegram import Update, ParseMode
+from telegram import Update
+from telegram.constants import ParseMode 
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 # --- Настройки ---
