@@ -92,7 +92,7 @@ def index():
 def webhook():
     data = request.get_json()
     update = Update.de_json(data, application.bot)
-    application.process_update(update)
+    await application.process_update(update)  # <-- без await
     return '', 200
 
 if __name__ == "__main__":
