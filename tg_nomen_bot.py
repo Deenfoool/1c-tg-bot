@@ -1,8 +1,9 @@
 import logging
 import json
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
-from telegram.constants import ParseMode
+import os
+from flask import Flask, request
+from telegram import Update, ParseMode
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 # --- Настройки ---
 LOG_FILE = 'bot.log'
@@ -25,11 +26,11 @@ def load_data():
         return {}
 
 # --- Обработка команды /start ---
-async def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Введите код или наименование товара.")
 
 # --- Основная обработка сообщений ---
-async def echo(update: Update, context: CallbackContext):
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     
     nomen_dict = load_data()
@@ -78,17 +79,28 @@ async def echo(update: Update, context: CallbackContext):
     await update.message.reply_text(response, parse_mode=ParseMode.MARKDOWN_V2)
 
 # --- Главная функция ---
-def main():
-    token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'
+app = Flask(__name__)
+application = None
 
-    app = ApplicationBuilder().token(token).build()
+@app.route('/')
+def index():
+    return 'Бот запущен!'
 
-    # Регистрация обработчиков
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-    # Запуск бота
-    app.run_polling()
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    update = Update.de_json(data, application.bot)
+    application.process_update(update)
+    return '', 200
 
 if __name__ == "__main__":
-    main()
+    token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'  # Токен от BotFather
+
+    application = ApplicationBuilder().token(token).build()
+
+    # Регистрация обработчиков
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    # Запуск Flask-приложения
+    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 10000)))
