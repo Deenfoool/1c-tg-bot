@@ -1,7 +1,8 @@
 import logging
 import json
-from telegram import Update, ParseMode
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
+from telegram.constants import ParseMode
 
 # --- Настройки ---
 LOG_FILE = 'bot.log'
