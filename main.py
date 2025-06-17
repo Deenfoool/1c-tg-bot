@@ -7,7 +7,33 @@ from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 # --- Настройки ---
-    async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+LOG_FILE = 'bot.log'
+DATA_FILE = 'nomenclature.json'
+
+# --- Инициализация логгера ---
+logging.basicConfig(
+    filename=LOG_FILE,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# --- Загрузка данных из JSON ---
+def load_data():
+    try:
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки файла: {e}")
+        return {}
+
+# --- Обработка команды /start ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("Получена команда /start")
+    await update.message.reply_text("Привет! Введите код или наименование товара.")
+
+# --- Основная обработка сообщений ---
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
 
     nomen_dict = load_data()
@@ -67,7 +93,7 @@ async def startup_event():
     token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'  # Токен от BotFather
 
     application = ApplicationBuilder().token(token).build()
-    await application.initialize()  # 🔧 ВАЖНО: Не забудьте это!
+    await application.initialize()
 
     # Регистрация обработчиков
     application.add_handler(CommandHandler("start", start))
