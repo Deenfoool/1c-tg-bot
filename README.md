@@ -109,9 +109,9 @@ https://opensource.org/license/mit
 
 📞 Контакты
 Если у вас есть вопросы, предложения или вы хотите получить помощь, пишите мне!
-@DeenFoool - Telegram
-@oh_padla - Vkontakte
-salumbek.den@gmail.com - Gmail
+1. @DeenFoool - Telegram
+2. @oh_padla - Vkontakte
+3. salumbek.den@gmail.com - Gmail
 
 ---
 
