@@ -39,6 +39,27 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not nomen_dict:
         await update.message.reply_text("Не могу найти данные. Проверьте файл.")
         return
+
+async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    args = context.args
+    if len(args) < 3:
+        await update.message.reply_text("Использование: /add [код] [наименование] [артикул]")
+        return
+
+    code, name, article = args[0], " ".join(args[1:-1]), args[-1]
+
+    try:
+        with open(DATA_FILE, 'r+', encoding='utf-8') as f:
+            nomen_dict = json.load(f)
+            nomen_dict[code] = {"наименование": name, "артикул": article}
+            f.seek(0)
+            json.dump(nomen_dict, f, ensure_ascii=False, indent=4)
+            f.truncate()
+
+        await update.message.reply_text(f"Добавлено:\nКод: {code}\nНаименование: {name}\nАртикул: {article}")
+    except Exception as e:
+        logger.error(f"Ошибка добавления элемента: {e}")
+        await update.message.reply_text("Произошла ошибка при добавлении товара.")
     
     # Поиск по коду
     if text.isdigit():
@@ -82,6 +103,18 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- Главная функция ---
 app = Flask(__name__)
 application = None
+
+@app.on_event("startup")
+async def startup_event():
+    global application
+    token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'
+    application = ApplicationBuilder().token(token).build()
+    await application.initialize()
+
+    # Регистрация обработчиков
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("add", add_item))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
 @app.route('/')
 def index():
