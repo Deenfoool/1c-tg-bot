@@ -1,7 +1,7 @@
 import logging
 import json
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update, ParseMode
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters
 
 # --- Настройки ---
 LOG_FILE = 'bot.log'
@@ -24,17 +24,17 @@ def load_data():
         return {}
 
 # --- Обработка команды /start ---
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Привет! Введите код или название товара.")
+async def start(update: Update, context: CallbackContext):
+    await update.message.reply_text("Привет! Введите код или наименование товара.")
 
 # --- Основная обработка сообщений ---
-def echo(update: Update, context: CallbackContext):
+async def echo(update: Update, context: CallbackContext):
     text = update.message.text.strip()
     
     nomen_dict = load_data()
     
     if not nomen_dict:
-        update.message.reply_text("Не могу найти данные. Проверьте файл.")
+        await update.message.reply_text("Не могу найти данные. Проверьте файл.")
         return
     
     # Поиск по коду
@@ -48,7 +48,7 @@ def echo(update: Update, context: CallbackContext):
             )
         else:
             reply = "Товар не найден."
-        update.message.reply_text(reply)
+        await update.message.reply_text(reply)
         return
     
     # Поиск по частичному совпадению
@@ -62,7 +62,7 @@ def echo(update: Update, context: CallbackContext):
             })
 
     if not matches:
-        update.message.reply_text("Ничего не найдено.")
+        await update.message.reply_text("Ничего не найдено.")
         return
 
     # Формируем ответ
@@ -74,22 +74,20 @@ def echo(update: Update, context: CallbackContext):
             f"Артикул: {match['артикул']}\n\n"
         )
 
-    update.message.reply_text(response, parse_mode='Markdown')
+    await update.message.reply_text(response, parse_mode=ParseMode.MARKDOWN_V2)
 
 # --- Главная функция ---
 def main():
     token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'
 
-    updater = Updater(token)
-    dispatcher = updater.dispatcher
+    app = ApplicationBuilder().token(token).build()
 
     # Регистрация обработчиков
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
     # Запуск бота
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
