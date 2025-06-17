@@ -7,10 +7,11 @@ from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 # --- Настройки ---
+    async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
-    
+
     nomen_dict = load_data()
-    
+
     if not nomen_dict:
         await update.message.reply_text("Не могу найти данные. Проверьте файл.")
         return
