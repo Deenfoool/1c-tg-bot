@@ -2,8 +2,10 @@ import logging
 import json
 import os
 from flask import Flask, request
-from telegram import Update, ParseMode
+from telegram import Update
+from telegram.constants import ParseMode  # ✅ Правильный импорт
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+
 
 # --- Настройки ---
 LOG_FILE = 'bot.log'
