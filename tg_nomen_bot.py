@@ -2,10 +2,8 @@ import logging
 import json
 import os
 from flask import Flask, request
-from telegram import Update
-from telegram.constants import ParseMode  # ✅ Правильный импорт
+from telegram import Update, ParseMode
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
-
 
 # --- Настройки ---
 LOG_FILE = 'bot.log'
@@ -17,6 +15,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
 # --- Загрузка данных из JSON ---
 def load_data():
@@ -24,11 +23,12 @@ def load_data():
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        logging.error(f"Ошибка загрузки файла: {e}")
+        logger.error(f"Ошибка загрузки файла: {e}")
         return {}
 
 # --- Обработка команды /start ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("Получена команда /start")
     await update.message.reply_text("Привет! Введите код или наименование товара.")
 
 # --- Основная обработка сообщений ---
@@ -92,7 +92,7 @@ def index():
 def webhook():
     data = request.get_json()
     update = Update.de_json(data, application.bot)
-    application.process_update(update)  # <-- без await
+    application.process_update(update)
     return '', 200
 
 if __name__ == "__main__":
