@@ -2,7 +2,7 @@ import re
 import json
 
 def parse_line(line):
-    # Регулярное выражение для извлечения Кода, Наименования и Артикула
+    # Регулярное выражение для извлечения кода, наименования и артикула
     match = re.match(r'$$(\d+)$$ (.*) $([^$$]*)$', line)
     if not match:
         return None
@@ -11,32 +11,33 @@ def parse_line(line):
     full_name_part = match.group(2).strip()
     article = match.group(3).strip()
 
-    # Извлекаем наименование (до первой скобки)
-    name_match = re.match(r'(.*?) \$', full_name_part)
+    # Извлекаем наименование (до первой скобки или до слова в скобках)
+    name_match = re.match(r'(.*?) $$', full_name_part)
     if name_match:
         name = name_match.group(1).strip()
     else:
         name = full_name_part.strip()
 
     return {
-        "Код": code,
-        "Наименование": name,
-        "Артикул": article
+        code: {
+            "наименование": name,
+            "артикул": article
+        }
     }
 
-# Чтение данных из файла
-file_path = 'nomen.txt'
+# Чтение данных из текстового файла
+input_file = 'nomen.txt'
 output_file = 'nomenclature.json'
 
-data = []
+data = {}
 
-with open(file_path, 'r', encoding='utf-8') as f:
+with open(input_file, 'r', encoding='utf-8') as f:
     for line in f:
         parsed = parse_line(line)
         if parsed:
-            data.append(parsed)
+            data.update(parsed)
 
-# Сохранение в JSON
+# Сохранение результата в JSON
 with open(output_file, 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, indent=4)
 
