@@ -7,33 +7,6 @@ from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 # --- Настройки ---
-LOG_FILE = 'bot.log'
-DATA_FILE = 'nomenclature.json'
-
-# --- Инициализация логгера ---
-logging.basicConfig(
-    filename=LOG_FILE,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# --- Загрузка данных из JSON ---
-def load_data():
-    try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Ошибка загрузки файла: {e}")
-        return {}
-
-# --- Обработка команды /start ---
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Получена команда /start")
-    await update.message.reply_text("Привет! Введите код или наименование товара.")
-
-# --- Основная обработка сообщений ---
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     
     nomen_dict = load_data()
@@ -90,19 +63,27 @@ application = None
 @app.on_event("startup")
 async def startup_event():
     global application
-    token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'  # Замените на свой токен
-    application = ApplicationBuilder().token(token).build()
+    token = '7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4'  # Токен от BotFather
 
-    # Регистрируем обработчики команд
+    application = ApplicationBuilder().token(token).build()
+    await application.initialize()  # 🔧 ВАЖНО: Не забудьте это!
+
+    # Регистрация обработчиков
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
 @app.post("/webhook")
 async def webhook(request: Request):
-    data = await request.json()
-    update = Update.de_json(data, application.bot)
-    await application.process_update(update)
-    return "", 200
+    logger.info("Поступил запрос на /webhook")
+    try:
+        data = await request.json()
+        logger.debug(f"Данные: {data}")
+        update = Update.de_json(data, application.bot)
+        await application.process_update(update)
+        return "", 200
+    except Exception as e:
+        logger.error(f"Ошибка обработки вебхука: {e}")
+        return {"error": str(e)}, 500
 
 @app.get("/")
 async def root():
