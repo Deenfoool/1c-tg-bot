@@ -1,8 +1,10 @@
+import os
 import json
 import re
 import os
 import datetime
 import logging
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import (
     ApplicationBuilder,
@@ -12,6 +14,8 @@ from telegram.ext import (
     filters,
     ContextTypes
 )
+
+load_dotenv()
 
 # Настройка логирования
 logging.basicConfig(
@@ -263,7 +267,7 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Основной функционал бота
 def main():
-    application = ApplicationBuilder().token("7119996029:AAGJn6MrE5bAb0MYbrQkG7C9e5-ugsAUwH4").build()
+    application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_items))
