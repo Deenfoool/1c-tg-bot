@@ -35,10 +35,10 @@ CHUNK_SIZE = 5  # Количество записей на странице
 
 # Экранирование для MarkdownV2
 def escape_markdown(text):
-    # Список всех специальных символов MarkdownV2
     markdown_chars = ['*', '_', '`', '[', ']', '(', ')', '~', '>', '#', '+', '=', '|', '{', '}', '!', '.', '-']
     for char in markdown_chars:
-        text = text.replace(char, f'\\{char}')
+        if f'\\{char}' not in text:
+            text = text.replace(char, f'\\{char}')
     return text
 
 
