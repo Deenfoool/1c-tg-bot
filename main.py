@@ -35,24 +35,11 @@ CHUNK_SIZE = 5  # Количество записей на странице
 
 # Экранирование для MarkdownV2
 def escape_markdown(text):
-    return text.replace('*', r'\*') \
-               .replace('_', r'\_') \
-               .replace('`', r'\`') \
-               .replace('[', r'\[') \
-               .replace(']', r'\]') \
-               .replace('(', r'\(') \
-               .replace(')', r'\)') \
-               .replace('~', r'\~') \
-               .replace('>', r'\>') \
-               .replace('#', r'\#') \
-               .replace('+', r'\+') \
-               .replace('=', r'\=') \
-               .replace('|', r'\|') \
-               .replace('{', r'\{') \
-               .replace('}', r'\}') \
-               .replace('!', r'\!') \
-               .replace('.', r'\.') \
-               .replace('-', r'\-') 
+    # Список всех специальных символов MarkdownV2
+    markdown_chars = ['*', '_', '`', '[', ']', '(', ')', '~', '>', '#', '+', '=', '|', '{', '}', '!', '.', '-']
+    for char in markdown_chars:
+        text = text.replace(char, f'\\{char}')
+    return text
 
 
 # Логирование действий
