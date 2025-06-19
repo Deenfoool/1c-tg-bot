@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>База данных</title>
+</head>
+<body>
+    <h1>📊 База данных</h1>
+    <h2>Модели</h2>
+    <ul>
+        {% for row in models %}
+            <li>{{ row }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Узлы</h2>
+    <ul>
+        {% for row in nodes %}
+            <li>{{ row }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Детали</h2>
+    <ul>
+        {% for row in parts %}
+            <li>{{ row }}</li>
+        {% endfor %}
+    </ul>
+    <a href="/">Вернуться</a>
+</body>
+</html>
