@@ -102,9 +102,6 @@ python main.py
 
 5. В Telegram найдите вашего бота и отправьте `/start`.
 
-📝 Лицензия
-MIT License:
-https://opensource.org/license/mit
 ---
 
 📞 Контакты
