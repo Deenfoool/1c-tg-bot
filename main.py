@@ -33,14 +33,14 @@ logging.basicConfig(
 NOMENCLATURE_FILE = 'nomenclature.json'
 CHUNK_SIZE = 5  # Количество записей на странице
 
-# Экранирование для MarkdownV2
-def escape_markdown(text):
-    markdown_chars = ['*', '_', '`', '[', ']', '(', ')', '~', '>', '#', '+', '=', '|', '{', '}', '!', '.', '-']
-    for char in markdown_chars:
-        if f'\\{char}' not in text:
-            text = text.replace(char, f'\\{char}')
+# Экранирование для HTML
+def escape_html(text):
+    if not text:
+        return ''
+    html_chars = ['<', '>', '&']
+    for char in html_chars:
+        text = text.replace(char, f'&#{ord(char)};')
     return text
-
 
 # Логирование действий
 def log_user_action(user_id, action, message_text):
@@ -66,11 +66,36 @@ def save_nomenclature(nomenclature):
     except Exception as e:
         logging.error(f"Ошибка сохранения файла: {e}")
 
+# Отображение страницы списка номенклатуры
+async def show_list_page(message: Message, context: ContextTypes.DEFAULT_TYPE, page_index: int):
+    nomenclature = load_nomenclature()
+    total_pages = (len(nomenclature) + CHUNK_SIZE - 1) // CHUNK_SIZE
+    current_page = page_index + 1
+    chunk = nomenclature[page_index * CHUNK_SIZE : (page_index + 1) * CHUNK_SIZE]
+    message_text = f"<b>📋 Список записей</b> (страница {current_page}/{total_pages}):\n"
+    for item in chunk:
+        message_text += (
+            f"🔹 Код: <code>{item['code']}</code>\n"
+            f"🔹 Наименование: {escape_html(item['name'])}\n\n"
+        )
+    keyboard = []
+    if current_page > 1:
+        keyboard.append([InlineKeyboardButton("⬅️ Предыдущая", callback_data="prev_list")])
+    if current_page < total_pages:
+        keyboard.append([InlineKeyboardButton("➡️ Следующая", callback_data="next_list")])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    logging.debug(f"Отправляю HTML-сообщение: {message_text}")
+    try:
+        await message.edit_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
+    except Exception as e:
+        logging.error(f"Не удалось обновить сообщение: {e}")
+        await message.reply_text(message_text, reply_markup=reply_markup)
+
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_user_action(update.effective_user.id, "/start", update.message.text)
     await update.message.reply_text(
-        "👋 Привет! Я ваш помощник в работе с номенклатурой.\n\n"
+        "👋 Привет! Я ваш помощник в работе с номенклатурой.\n"
         "🔹 Используйте команды или кнопки ниже:\n"
         "/add [Код] [Наименование] – добавить новую позицию\n"
         "/list – показать первые 10 записей\n"
@@ -147,7 +172,7 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     nomenclature = load_nomenclature()
     if any(item['code'] == code for item in nomenclature):
-        await update.message.reply_text(f"❌ Запись с кодом `{code}` уже существует.")
+        await update.message.reply_text(f"❌ Запись с кодом <code>{code}</code> уже существует.")
         return
     nomenclature.append({'code': code, 'name': name})
     save_nomenclature(nomenclature)
@@ -160,18 +185,9 @@ async def list_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not nomenclature:
         await update.message.reply_text("❌ Номенклатура пуста.")
         return
-    message = "📋 Первые 10 записей:\n\n"
-    for item in nomenclature[:10]:
-        message += (
-            f"🔹 Код: `{item['code']}`\n"
-            f"🔹 Наименование: {escape_markdown(item['name'])}\n\n"
-        )
-        
-    try:
-        await update.message.reply_text(message, parse_mode='MarkdownV2')
-    except Exception as e:
-        logging.error(f"Не удалось отправить сообщение в Markdown: {e}")
-        await update.message.reply_text(message)
+    context.user_data['list_message'] = await update.message.reply_text("Загрузка...")
+    context.user_data['list_page'] = 0  # Сохраняем текущую страницу
+    await show_list_page(context.user_data['list_message'], context, 0)
     log_user_action(update.effective_user.id, "list", update.message.text)
 
 # Удаление записи
@@ -186,9 +202,9 @@ async def delete_item(update: Update, context: ContextTypes.DEFAULT_TYPE):
     new_nomenclature = [item for item in nomenclature if item['code'] != code_to_delete]
     if found:
         save_nomenclature(new_nomenclature)
-        await update.message.reply_text(f"✅ Запись с кодом `{code_to_delete}` удалена.")
+        await update.message.reply_text(f"✅ Запись с кодом <code>{code_to_delete}</code> удалена.")
     else:
-        await update.message.reply_text(f"❌ Запись с кодом `{code_to_delete}` не найдена.")
+        await update.message.reply_text(f"❌ Запись с кодом <code>{code_to_delete}</code> не найдена.")
     log_user_action(update.effective_user.id, "delete", update.message.text)
 
 # Поиск по запросу + пагинация
@@ -204,7 +220,8 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     context.user_data['search_results'] = results
     context.user_data['page'] = 0
-    await show_search_page(update.message, context, 0)
+    context.user_data['search_message'] = await update.message.reply_text("Загрузка...")
+    await show_search_page(context.user_data['search_message'], context, 0)
 
 # Отображение страницы результатов поиска
 async def show_search_page(message: Message, context: ContextTypes.DEFAULT_TYPE, page_index: int):
@@ -212,11 +229,11 @@ async def show_search_page(message: Message, context: ContextTypes.DEFAULT_TYPE,
     total_pages = (len(results) + CHUNK_SIZE - 1) // CHUNK_SIZE
     current_page = page_index + 1
     chunk = results[page_index * CHUNK_SIZE : (page_index + 1) * CHUNK_SIZE]
-    message_text = f"🔍 Результаты поиска (страница {current_page}/{total_pages}):\n"
+    message_text = f"<b>🔍 Результаты поиска</b> (страница {current_page}/{total_pages}):\n"
     for item in chunk:
         message_text += (
-            f"🔹 Код: `{item['code']}`\n"
-            f"🔹 Наименование: {escape_markdown(item['name'])}\n\n"
+            f"🔹 Код: <code>{item['code']}</code>\n"
+            f"🔹 Наименование: {escape_html(item['name'])}\n\n"
         )
     keyboard = []
     if current_page > 1:
@@ -224,8 +241,9 @@ async def show_search_page(message: Message, context: ContextTypes.DEFAULT_TYPE,
     if current_page < total_pages:
         keyboard.append([InlineKeyboardButton("➡️ Следующая", callback_data="next")])
     reply_markup = InlineKeyboardMarkup(keyboard)
+    logging.debug(f"Отправляю HTML-сообщение: {message_text}")
     try:
-        await message.edit_text(message_text, parse_mode='MarkdownV2', reply_markup=reply_markup)
+        await message.edit_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
     except Exception as e:
         logging.error(f"Не удалось обновить сообщение: {e}")
         await message.reply_text(message_text, reply_markup=reply_markup)
@@ -235,14 +253,30 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
-    page_index = context.user_data.get('page', 0)
-    results = context.user_data.get('search_results', [])
     if data == "prev":
-        page_index -= 1
+        current_page = context.user_data.get('page', 0)
+        if current_page > 0:
+            context.user_data['page'] -= 1
+            await show_search_page(query.message, context, context.user_data['page'])
     elif data == "next":
-        page_index += 1
-    context.user_data['page'] = page_index
-    await show_search_page(query.message, context, page_index)
+        current_page = context.user_data.get('page', 0)
+        results = context.user_data.get('search_results', [])
+        max_page = (len(results) + CHUNK_SIZE - 1) // CHUNK_SIZE - 1
+        if current_page < max_page:
+            context.user_data['page'] += 1
+            await show_search_page(query.message, context, context.user_data['page'])
+    elif data == "prev_list":
+        current_page = context.user_data.get('list_page', 0)
+        if current_page > 0:
+            context.user_data['list_page'] -= 1
+            await show_list_page(query.message, context, context.user_data['list_page'])
+    elif data == "next_list":
+        current_page = context.user_data.get('list_page', 0)
+        nomenclature = load_nomenclature()
+        max_page = (len(nomenclature) + CHUNK_SIZE - 1) // CHUNK_SIZE - 1
+        if current_page < max_page:
+            context.user_data['list_page'] += 1
+            await show_list_page(query.message, context, context.user_data['list_page'])
 
 # Обработка неизвестных команд
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
