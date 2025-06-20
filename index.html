@@ -2,23 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Web App</title>
+    <title>Номенклатура</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script> 
 </head>
 <body>
-    <h1>📦 Номенклатура</h1>
-    <p>Загрузка...</p>
+    <header>
+        <h1>📦 Номенклатура</h1>
+        <input type="text" id="searchInput" placeholder="Поиск..." oninput="handleSearch()">
+    </header>
 
-    <script>
-        // Получаем данные пользователя
-        const user = Telegram.WebApp.initDataUnsafe.user;
-        if (user) {
-            document.body.innerHTML += `<p>Привет, ${user.first_name} (${user.id})</p>`;
-        }
+    <div class="controls">
+        <button onclick="toggleAddForm()">➕ Добавить</button>
+        <button onclick="importData()">📁 Импортировать .txt</button>
+    </div>
 
-        // Расширяем окно
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-    </script>
+    <form id="addForm" style="display: none;">
+        <input type="text" id="newCode" placeholder="Код (5+ символов)">
+        <input type="text" id="newName" placeholder="Наименование">
+        <button type="button" onclick="addItem()">Сохранить</button>
+        <button type="button" onclick="hideAddForm()">❌ Отменить</button>
+    </form>
+
+    <div id="items"></div>
+
+    <footer>
+        <button onclick="prevPage()">⬅️ Предыдущая</button>
+        <span id="pageInfo">Страница 1 из 1</span>
+        <button onclick="nextPage()">➡️ Следующая</button>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
