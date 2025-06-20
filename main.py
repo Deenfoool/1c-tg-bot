@@ -85,7 +85,6 @@ async def show_list_page(message: Message, context: ContextTypes.DEFAULT_TYPE, p
     if current_page < total_pages:
         keyboard.append([InlineKeyboardButton("➡️ Следующая", callback_data="next_list")])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    logging.debug(f"Отправляю HTML-сообщение: {message_text}")
     try:
         await message.edit_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
     except Exception as e:
@@ -102,7 +101,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/list – показать первые 10 записей\n"
         "/delete [Код] – удалить запись\n"
         "/help – помощь\n"
-        "/import – импортировать данные из .txt"
+        "/import – импортировать данные из .txt\n"
+        "/webapp – открыть интерфейс управления"
     )
 
 # Команда /help
@@ -115,6 +115,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /delete [Код] – удалить запись  
 /help – эта помощь  
 /import – импортировать данные из .txt  
+/webapp – открыть интерфейс управления
 """
     await update.message.reply_text(help_text)
     log_user_action(update.effective_user.id, "help", update.message.text)
@@ -123,15 +124,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def import_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_user_action(update.effective_user.id, "import", update.message.text)
     await update.message.reply_text("📎 Прикрепите .txt файл с данными.")
-
-#Подключение WebApp
-async def webapp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    button = InlineKeyboardButton(
-        "📦 Открыть интерфейс",
-        web_app=WebAppInfo(url='https://1c-tg-bot-deenfoool.amvera.io/') 
-    )
-    reply_markup = InlineKeyboardMarkup([[button]])
-    await update.message.reply_text("Откройте веб-интерфейс:", reply_markup=reply_markup)
 
 # Обработка документа (.txt)
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -196,7 +188,7 @@ async def list_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Номенклатура пуста.")
         return
     context.user_data['list_message'] = await update.message.reply_text("Загрузка...")
-    context.user_data['list_page'] = 0  # Сохраняем текущую страницу
+    context.user_data['list_page'] = 0
     await show_list_page(context.user_data['list_message'], context, 0)
     log_user_action(update.effective_user.id, "list", update.message.text)
 
@@ -251,7 +243,6 @@ async def show_search_page(message: Message, context: ContextTypes.DEFAULT_TYPE,
     if current_page < total_pages:
         keyboard.append([InlineKeyboardButton("➡️ Следующая", callback_data="next")])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    logging.debug(f"Отправляю HTML-сообщение: {message_text}")
     try:
         await message.edit_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
     except Exception as e:
@@ -263,11 +254,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
+
     if data == "prev":
         current_page = context.user_data.get('page', 0)
         if current_page > 0:
             context.user_data['page'] -= 1
             await show_search_page(query.message, context, context.user_data['page'])
+
     elif data == "next":
         current_page = context.user_data.get('page', 0)
         results = context.user_data.get('search_results', [])
@@ -275,11 +268,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if current_page < max_page:
             context.user_data['page'] += 1
             await show_search_page(query.message, context, context.user_data['page'])
+
     elif data == "prev_list":
         current_page = context.user_data.get('list_page', 0)
         if current_page > 0:
             context.user_data['list_page'] -= 1
             await show_list_page(query.message, context, context.user_data['list_page'])
+
     elif data == "next_list":
         current_page = context.user_data.get('list_page', 0)
         nomenclature = load_nomenclature()
@@ -287,6 +282,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if current_page < max_page:
             context.user_data['list_page'] += 1
             await show_list_page(query.message, context, context.user_data['list_page'])
+
+# Команда /webapp — открывает Mini App
+async def webapp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    button = InlineKeyboardButton(
+        "📦 Открыть интерфейс",
+        web_app=WebAppInfo(url='https://1c-tg-bot-deenfoool.amvera.io/') 
+    )
+    reply_markup = InlineKeyboardMarkup([[button]])
+    await update.message.reply_text("Откройте веб-интерфейс:", reply_markup=reply_markup)
 
 # Обработка неизвестных команд
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -296,18 +300,20 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Основной функционал бота
 async def main():
     application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+
     # Добавление обработчиков
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("webapp", webapp_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("import", import_command))
     application.add_handler(CommandHandler("list", list_items))
+    application.add_handler(CommandHandler("webapp", webapp_command))
     application.add_handler(MessageHandler(filters.Regex(r'^/delete '), delete_item))
     application.add_handler(MessageHandler(filters.Regex(r'^/add '), add_item))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search))
     application.add_handler(MessageHandler(filters.Document.TEXT, handle_document))
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(MessageHandler(filters.COMMAND, unknown))
+
     # Запуск
     await application.initialize()
     await application.start()
