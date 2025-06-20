@@ -9,7 +9,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/':
+        if self.path == '/docs':
             self.path = 'index.html'
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
