@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
-    padding: 20px;
     background-color: #f9f9f9;
+    padding: 20px;
 }
 
 header {
@@ -11,16 +11,30 @@ header {
     margin-bottom: 20px;
 }
 
-input[type="text"] {
-    padding: 5px;
-    width: 60%;
+.controls button {
+    margin-right: 10px;
+    padding: 10px 15px;
     border-radius: 4px;
-    border: 1px solid #ccc;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
 }
 
-#items {
-    max-height: 60vh;
-    overflow-y: auto;
+.controls button:hover {
+    background-color: #45a049;
+}
+
+#addForm {
+    margin-bottom: 20px;
+}
+
+#addForm input {
+    width: 45%;
+    padding: 8px;
+    margin-right: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
 
 .item {
@@ -29,11 +43,22 @@ input[type="text"] {
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 20px;
 }
