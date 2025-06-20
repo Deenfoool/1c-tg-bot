@@ -67,12 +67,6 @@ def save_nomenclature(nomenclature):
     except Exception as e:
         logging.error(f"Ошибка сохранения файла: {e}")
 
-
-async def webapp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    button = InlineKeyboardButton("📦 Открыть интерфейс", web_app=WebAppInfo(url='https://your-bot-webapp.example.com/webapp.html')) 
-    reply_markup = InlineKeyboardMarkup([[button]])
-    await update.message.reply_text("Откройте веб-интерфейс:", reply_markup=reply_markup)
-
 # Отображение страницы списка номенклатуры
 async def show_list_page(message: Message, context: ContextTypes.DEFAULT_TYPE, page_index: int):
     nomenclature = load_nomenclature()
