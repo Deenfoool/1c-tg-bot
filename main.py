@@ -9,7 +9,8 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    InputFile
+    InputFile,
+    WebAppInfo
 )
 from telegram.ext import (
     ApplicationBuilder,
@@ -128,6 +129,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def import_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_user_action(update.effective_user.id, "import", update.message.text)
     await update.message.reply_text("📎 Прикрепите .txt файл с данными.")
+
+#Подключение WebApp
+async def webapp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    button = InlineKeyboardButton(
+        "📦 Открыть интерфейс",
+        web_app=WebAppInfo(url='https://1c-tg-bot-deenfoool.amvera.io/') 
+    )
+    reply_markup = InlineKeyboardMarkup([[button]])
+    await update.message.reply_text("Откройте веб-интерфейс:", reply_markup=reply_markup)
 
 # Обработка документа (.txt)
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
