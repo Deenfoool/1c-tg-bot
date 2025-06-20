@@ -10,7 +10,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/docs':
-            self.path = 'index.html'
+            self.path = 'App.jsx'
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 with socketserver.TCPServer(("", PORT), MyHttpRequestHandler) as httpd:
