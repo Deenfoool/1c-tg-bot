@@ -21,6 +21,17 @@ function escapeHtml(text) {
                .replace(/>/g, '>');
 }
 
+async function fetchNomenclature() {
+    try {
+        const response = await fetch('https://1c-tg-bot-deenfoool.amvera.io/api/nomenclature'); 
+        if (!response.ok) throw new Error("Ошибка при получении данных");
+        nomenclature = await response.json();
+        renderItems();
+    } catch (e) {
+        document.getElementById('items').innerHTML = `<p>❌ Ошибка: ${e.message}</p>`;
+    }
+}
+
 function renderItems() {
     const itemsDiv = document.getElementById('items');
     itemsDiv.innerHTML = '';
