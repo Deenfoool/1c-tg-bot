@@ -2,44 +2,23 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Номенклатура</title>
+    <title>Web App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script> 
-    <style>
-        body {
-            font-family: Arial;
-            padding: 20px;
-        }
-        .item {
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
-    <h1>📋 Номенклатура</h1>
-    <div id="items"></div>
+    <h1>📦 Номенклатура</h1>
+    <p>Загрузка...</p>
 
     <script>
-        // Установите параметры окна
+        // Получаем данные пользователя
+        const user = Telegram.WebApp.initDataUnsafe.user;
+        if (user) {
+            document.body.innerHTML += `<p>Привет, ${user.first_name} (${user.id})</p>`;
+        }
+
+        // Расширяем окно
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
-
-        // Пример данных (можно получить через запрос к серверу)
-        const nomenclature = [
-            { code: "8584750", name: "АКБ 31S-1000 Polus Arctic конус" },
-            { code: "8559746", name: "АКБ 31S-1000 TAB Polar (330х175х220) резьба" },
-            { code: "8450665", name: "АКБ 6СТ-100 VL Reactor   (353х175х190 , 1080 А) о п" },
-            { code: "8449338", name: "АКБ 6СТ-100 VL Reactor   (353х175х190 , 1080 А) п п" },
-            { code: "8448902", name: "АКБ 6СТ-100 VL АКОМ   (353х175х190 , 920 А) п  п" }
-        ];
-
-        const itemsDiv = document.getElementById('items');
-        nomenclature.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<b>Код:</b> ${item.code}<br><b>Наименование:</b> ${item.name}`;
-            itemsDiv.appendChild(div);
-        });
     </script>
 </body>
 </html>
